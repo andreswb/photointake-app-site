@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Photo Intake – Organize Photos from Multiple Cameras</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Photo Intake is a macOS app that automatically organizes photos and videos from multiple cameras into clean, structured folder trees. Supports RAW, JPEG, HEIC, PNG, and video.">
+  <link rel="icon" href="logo.png" type="image/x-icon">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Arial, sans-serif; margin: 0; padding: 0; line-height: 1.6; color: #333; background: #fff; }
+
+    /* ── Header ── */
+    header { background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+    header h1 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+    header h1 img { width: 32px; height: 32px; border-radius: 7px; }
+    nav a { color: white; margin: 0 10px; text-decoration: none; font-weight: 600; transition: opacity 0.2s; }
+    nav a:hover { opacity: 0.8; text-decoration: underline; }
+
+    /* ── Layout ── */
+    .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .hidden { display: none; }
+
+    /* ── Typography ── */
+    h2 { color: #1a1a1a; font-size: 2em; margin-bottom: 16px; }
+    h3 { color: #333; margin-top: 32px; font-size: 1.35em; }
+    ul { margin-left: 20px; }
+    ul li { margin-bottom: 8px; line-height: 1.7; }
+    a { color: #1a73e8; }
+
+    /* ── Hero ── */
+    .hero { text-align: center; padding: 52px 20px 40px; background: linear-gradient(160deg, #e8f0fe 0%, #f8f9ff 100%); border-radius: 16px; margin-bottom: 40px; }
+    .hero img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 8px 30px rgba(26,115,232,0.25); margin-bottom: 20px; }
+    .hero h2 { margin: 0 0 12px; font-size: 2.2em; color: #1a1a1a; }
+    .hero p { font-size: 1.1em; color: #555; max-width: 560px; margin: 0 auto 24px; }
+
+    /* ── App Store Button ── */
+    a.button { display: inline-block; padding: 13px 32px; margin: 10px 0; background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 1em; box-shadow: 0 4px 15px rgba(26,115,232,0.35); transition: transform 0.2s, box-shadow 0.2s; }
+    a.button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26,115,232,0.5); color: white; }
+
+    /* ── Feature grid ── */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin: 30px 0; }
+    .feature-card { background: #f8f9fa; padding: 22px; border-radius: 12px; border: 1.5px solid #e9ecef; }
+    .feature-card h4 { color: #1a73e8; margin-top: 0; margin-bottom: 10px; font-size: 1.05em; }
+    .feature-card p { margin: 0; color: #555; font-size: 0.95em; }
+
+    /* ── Info / note boxes ── */
+    .info-note { background: #e8f0fe; border-left: 4px solid #1a73e8; padding: 16px 18px; margin: 24px 0; border-radius: 6px; }
+    .info-note strong { color: #1558b0; display: block; margin-bottom: 6px; }
+    .note { background: #fff8e1; border-left: 4px solid #ffc107; padding: 16px 18px; margin: 24px 0; border-radius: 6px; }
+    .note strong { color: #7a5a00; display: block; margin-bottom: 4px; }
+
+    /* ── FAQ ── */
+    .faq-item { margin-bottom: 22px; background: #f8f9fa; padding: 20px 22px; border-radius: 10px; border-left: 4px solid #1a73e8; }
+    .faq-item strong { color: #1a73e8; font-size: 1.05em; display: block; margin-bottom: 8px; }
+
+    /* ── Template table ── */
+    .template-table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 10px; overflow: hidden; }
+    .template-table th { background: #1a73e8; color: white; padding: 13px 16px; text-align: left; font-weight: 600; }
+    .template-table td { padding: 12px 16px; border-bottom: 1px solid #e9ecef; font-size: 0.95em; }
+    .template-table tr:last-child td { border-bottom: none; }
+    .template-table tr:nth-child(even) td { background: #f8f9fa; }
+    .code { font-family: 'SF Mono', 'Menlo', monospace; background: #eef2ff; color: #1558b0; padding: 2px 6px; border-radius: 4px; font-size: 0.88em; }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 24px 20px; font-size: 0.9em; color: #666; border-top: 1px solid #ddd; margin-top: 60px; }
+    footer a { color: #1a73e8; }
+  </style>
+  <script>
+    function showSection(section) {
+      document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(section);
+      if (target) target.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.onload = function() {
+      const hash = window.location.hash.substring(1);
+      if (hash === 'privacy') showSection('privacy');
+      else if (hash === 'support') showSection('support');
+      else showSection('home');
+    }
+  </script>
+</head>
+<body>
+
+<header>
+  <h1>
+    <img src="logo.png" alt="Photo Intake icon">
+    Photo Intake
+  </h1>
+  <nav>
+    <a href="#home"    onclick="showSection('home')">Home</a>
+    <a href="#support" onclick="showSection('support')">Support</a>
+    <a href="#privacy" onclick="showSection('privacy')">Privacy Policy</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════════════════════════ HOME -->
+  <div id="home" class="section">
+
+    <div class="hero">
+      <img src="logo.png" alt="Photo Intake">
+      <h2>Photo Intake</h2>
+      <p>Consolidate photos and videos from multiple cameras into a clean, structured folder tree — automatically, in one step.</p>
+      <a href="https://apps.apple.com/app/id6766856506" class="button">Download on the Mac App Store</a>
+    </div>
+
+    <h3>What It Does</h3>
+    <p>After a trip or a shoot with multiple cameras, your memory cards hold thousands of files scattered across different folders and dates. Photo Intake scans all your source folders at once, detects the events inside them, and organises every photo, RAW file, and video into the folder structure you choose — by year, event, camera, or any custom combination.</p>
+    <p>Choose Copy or Move, hit Apply, and your library is clean. No manual sorting, no missed files, no accidental overwrites.</p>
+
+    <h3>Key Features</h3>
+    <div class="feature-grid">
+
+      <div class="feature-card">
+        <h4>📂 Multi-Source Scanning</h4>
+        <p>Add multiple source folders at once — SD card, hard drive, network share. Photo Intake scans all of them in a single pass, recursively if you choose.</p>
+      </div>
+
+      <div class="feature-card">
+        <h4>📅 Smart Event Detection</h4>
+        <p>Photos are automatically clustered into events by time gap and GPS distance. Adjust the thresholds, rename events, define custom date-range events by hand, or dissolve any event into daily groups.</p>
+      </div>
+
+      <div class="feature-card">
+        <h4>🗂️ Flexible Folder Templates</h4>
+        <p>Six built-in templates — Year / Event / Camera, Year / Month / Camera, Camera / Year / Event, and more — plus a fully custom builder so you can design any folder hierarchy you need.</p>
+      </div>
+
+      <div class="feature-card">
+        <h4>📸 RAW + JPEG + HEIC + Video</h4>
+        <p>Full support for RAW files (CR3, ARW, NEF, DNG, and more), JPEG, HEIC, PNG, TIFF, and video. Each format can land in its own subfolder or be kept together.</p>
+      </div>
+
+      <div class="feature-card">
+        <h4>✂️ File Type Splitting</h4>
+        <p>Keep everything together, separate RAW from the rest, or split all types individually: RAW, JPG, HEIC, Photos (PNG/TIFF), and Video each get their own folder.</p>
+      </div>
+
+      <div class="feature-card">
+        <h4>👁️ Live Output Preview</h4>
+        <p>The folder tree updates in real time as you adjust settings. See exactly where every file will land before a single byte is moved.</p>
+      </div>
+
+      <div class="feature-card">
+        <h4>🔄 Copy or Move</h4>
+        <p>Copy to keep originals untouched, or move to free up space on your source cards. Collision avoidance ensures no file is ever silently overwritten.</p>
+      </div>
+
+      <div class="feature-card">
+        <h4>📍 Reverse Geocoding</h4>
+        <p>Optionally append city names to event labels automatically using GPS data from your photos — completely on-device, no internet required.</p>
+      </div>
+
+      <div class="feature-card">
+        <h4>🔖 Presets</h4>
+        <p>Save your favourite combination of template, split mode, and transfer settings as a named preset and apply it in one click on future imports.</p>
+      </div>
+
+      <div class="feature-card">
+        <h4>🔒 Privacy First</h4>
+        <p>No cloud sync, no analytics, no tracking. All processing happens locally on your Mac. Your photos never leave your machine.</p>
+      </div>
+
+    </div>
+
+    <h3>Folder Templates</h3>
+    <p>Choose from six ready-made structures or build your own from individual levels (Year, Month, Day, Event, Camera, Make, File Type).</p>
+    <table class="template-table">
+      <thead>
+        <tr><th>Template</th><th>Example path</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Year / Event / Camera</td>         <td><span class="code">2025 / 2025-09-12 — Zurich / Canon R8 /</span></td></tr>
+        <tr><td>Year / Event <small>(camera as filename prefix)</small></td><td><span class="code">2025 / 2025-09-12 — Zurich / Canon_R8_IMG_0001.jpg</span></td></tr>
+        <tr><td>Event / Camera</td>                <td><span class="code">2025-09-12 — Zurich / Canon R8 /</span></td></tr>
+        <tr><td>Camera / Year / Event</td>         <td><span class="code">Canon R8 / 2025 / 2025-09-12 — Zurich /</span></td></tr>
+        <tr><td>Year / Camera</td>                 <td><span class="code">2025 / Canon R8 /</span></td></tr>
+        <tr><td>Year / Month / Camera</td>         <td><span class="code">2025 / 2025-09 / Canon R8 /</span></td></tr>
+        <tr><td>Custom…</td>                       <td><span class="code">Your own combination of any levels</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>File Type Splitting</h3>
+    <p>Within any camera folder, Photo Intake can further separate files by type:</p>
+    <ul>
+      <li><strong>No split</strong> — all stills together, videos in a <span class="code">Video/</span> subfolder</li>
+      <li><strong>RAW only</strong> — RAW files go to <span class="code">RAW/</span>; JPEGs, HEICs, and PNGs share a <span class="code">Photos/</span> (or <span class="code">JPG/</span> / <span class="code">HEIC/</span>) folder named after the actual content</li>
+      <li><strong>All types</strong> — <span class="code">RAW/</span>, <span class="code">JPG/</span>, <span class="code">HEIC/</span>, <span class="code">Photos/</span> (PNG/TIFF), and <span class="code">Video/</span> each get their own folder</li>
+    </ul>
+    <p>Folder names are smart: a folder of pure JPEGs is called <span class="code">JPG/</span>, a folder of pure HEICs is called <span class="code">HEIC/</span>, and mixed groups are called <span class="code">Photos/</span>.</p>
+
+    <h3>Perfect For</h3>
+    <ul>
+      <li><strong>Photographers shooting with multiple cameras:</strong> Mirrorless + backup body, or two photographers at the same wedding — all files end up neatly sorted by camera.</li>
+      <li><strong>Travel shoots:</strong> Drone, GoPro, and mirrorless footage all mixed on one drive? Photo Intake separates them cleanly by event and device.</li>
+      <li><strong>Hybrid shooters:</strong> RAW+JPEG pairs and video clips from the same session are automatically routed to their correct subfolders.</li>
+      <li><strong>Family archivists:</strong> Years of mixed phone and camera photos, all unified into a single chronological structure.</li>
+      <li><strong>Studio and commercial:</strong> Client shoots from multiple SD cards ingested into a consistent folder layout with collision-safe filenames.</li>
+    </ul>
+
+    <div class="info-note">
+      <strong>ℹ️ Collision-safe by design</strong>
+      Two cameras can produce files with the same name (e.g. both a Canon R8 and a Canon RP generate <span class="code">IMG_0001.ARW</span>). Photo Intake detects this and either separates them into per-camera folders or optionally prefixes filenames with the camera model — whichever matches your chosen structure.
+    </div>
+
+    <div class="note">
+      <strong>macOS Sandbox &amp; Security</strong>
+      Photo Intake is a fully sandboxed Mac App Store app. It only accesses the folders you explicitly grant permission to, using Apple's security-scoped bookmarks. Nothing runs in the background when the app is closed.
+    </div>
+
+    <a href="https://apps.apple.com/app/id6766856506" class="button">Download on the Mac App Store</a>
+
+  </div><!-- /home -->
+
+
+  <!-- ══════════════════════════════════════════════════════════ SUPPORT -->
+  <div id="support" class="section hidden">
+    <h2>Support &amp; Help</h2>
+    <p>Need help with Photo Intake? We're here to assist you.</p>
+
+    <h3>Contact</h3>
+    <p>Email: <a href="mailto:andres.wetzel@gmail.com">andres.wetzel@gmail.com</a><br>
+    We typically respond within 24–48 hours.</p>
+
+    <h3>Frequently Asked Questions</h3>
+
+    <div class="faq-item">
+      <strong>How do I add source folders?</strong>
+      <p>On the Pick screen, click the <em>+</em> button (or drag a folder onto the window) to add one or more source folders. Each folder has an individual toggle to include or exclude subfolders. You can add as many folders as you like — from different drives, SD cards, or network shares — and they are all scanned in one pass.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>What file types are supported?</strong>
+      <p>Photo Intake handles RAW files (CR3, CR2, ARW, NEF, ORF, RW2, DNG, and other common raw formats), JPEG, HEIC/HEIF, PNG, TIFF, BMP, WebP, and video files (MOV, MP4, and common video containers). Non-media files such as sidecar XML or .DS_Store are never touched and a count of skipped files is shown after the transfer completes.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>How does event detection work?</strong>
+      <p>Photos are sorted by capture date and clustered into events whenever the gap between consecutive shots exceeds a configurable time threshold (default: 6 hours). An optional GPS-distance threshold can force a split even within a shorter time period if your location changed significantly. You can adjust both thresholds in the gear icon on the Plan screen. You can also define manual events by date range that take priority over auto-detection, and dissolve any auto-event into per-day groups.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>Can I rename events before applying?</strong>
+      <p>Yes. On the Plan screen, every event name is an editable text field. Click on it and type a new name — the folder tree preview updates instantly. If reverse geocoding is enabled, city names are appended automatically but can still be edited.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>What folder templates are available?</strong>
+      <p>Six built-in templates: Year / Event / Camera, Year / Event (camera as filename prefix), Event / Camera, Camera / Year / Event, Year / Camera, and Year / Month / Camera. The Custom template lets you drag and drop any combination of levels (Year, Month, Day, Event, Camera, Make, File Type) into any order.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>What is File Type splitting?</strong>
+      <p><em>No split</em> keeps all stills in the same folder (videos still get their own subfolder). <em>RAW only</em> separates RAW files into a <span class="code">RAW/</span> folder while all other stills share a <span class="code">Photos/</span> folder (named <span class="code">JPG/</span> or <span class="code">HEIC/</span> when the group is uniform). <em>All types</em> gives RAW, JPEG, HEIC, other stills (PNG/TIFF), and video each their own subfolder.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>Can two cameras produce files with the same name?</strong>
+      <p>Yes — a Canon R8 and a Canon RP both produce files named <span class="code">IMG_0001.ARW</span>. If your chosen template includes a Camera level, each camera gets its own folder and there is no collision. If your structure groups both cameras into the same folder (e.g. Year-only), Photo Intake warns you and offers to prefix filenames with the camera model automatically.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>What happens if the destination already has a file with the same name?</strong>
+      <p>Photo Intake never silently overwrites files. If a destination file already exists, a numeric suffix is appended (<span class="code">IMG_0001_1.jpg</span>, <span class="code">IMG_0001_2.jpg</span>, …) and the renamed count is reported in the completion summary.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>What is the difference between Copy and Move?</strong>
+      <p>Copy duplicates files to the destination leaving originals on the source. Move transfers files and removes them from the source after a successful copy — useful for freeing up SD card space. A warning is shown before you apply in Move mode.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>Can I preview the output before applying?</strong>
+      <p>Yes. The right panel on the Plan screen shows a live folder tree preview that reflects your current template, split mode, and event names. Every folder and file count is shown before a single file is touched.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>What are presets?</strong>
+      <p>A preset saves the current combination of folder template, custom levels, split mode, transfer mode, reverse geocode setting, and filename-prefix preference under a name you choose. Apply any saved preset in one click on the Plan screen. Useful when you regularly import from the same set of cameras with the same workflow.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>Does reverse geocoding require an internet connection?</strong>
+      <p>No. Reverse geocoding uses Apple's on-device <span class="code">CLGeocoder</span>, which draws on locally cached map data. Results may be unavailable for very remote locations or if the device has never downloaded map data for that region.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>What happens to non-photo files (sidecar XML, .DS_Store, etc.)?</strong>
+      <p>They are never copied or moved. The completion screen shows a count of non-media files that were found in the source but left untouched, so you are always aware they exist.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>Can I stop a transfer in progress?</strong>
+      <p>Yes — a Cancel button is available at any time during the transfer. Files already processed remain in the destination. If you were using Copy mode you can safely re-run the same plan; collision avoidance ensures already-copied files are renamed rather than overwritten. In Move mode, already-moved files are no longer in the source, so a fresh scan will only pick up what remains.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>My source folder was deleted after being added. What happens?</strong>
+      <p>Photo Intake stores security-scoped bookmarks. If a bookmarked folder can no longer be resolved (e.g. it was deleted or the drive was reformatted), the app removes the stale bookmark automatically and shows the folder as unavailable. No crash or persistent error occurs.</p>
+    </div>
+
+    <h3>Technical Support</h3>
+    <p>For technical issues, please email us with:</p>
+    <ul>
+      <li>Your macOS version</li>
+      <li>Photo Intake version (visible in the About menu)</li>
+      <li>A description of the issue and steps to reproduce it</li>
+      <li>Screenshots or Console log excerpts if applicable</li>
+    </ul>
+
+    <h3>System Requirements</h3>
+    <ul>
+      <li>macOS 14 Sonoma or later</li>
+      <li>Apple Silicon or Intel Mac</li>
+      <li>Read access to source folders (granted via the app's folder picker or drag-and-drop)</li>
+      <li>Write access to the chosen output folder</li>
+    </ul>
+
+  </div><!-- /support -->
+
+
+  <!-- ══════════════════════════════════════════════════════════ PRIVACY -->
+  <div id="privacy" class="section hidden">
+    <h2>Privacy Policy</h2>
+
+    <h3>No Data Collection</h3>
+    <p>Photo Intake does not collect, transmit, or share any personal data, file names, folder paths, photos, or metadata. All processing happens entirely on your Mac.</p>
+
+    <h3>Local Processing Only</h3>
+    <p>Your files never leave your machine. Photo Intake:</p>
+    <ul>
+      <li>Reads EXIF metadata (capture date, GPS coordinates, camera model) directly from files on your drives to build the event timeline and folder names.</li>
+      <li>Copies or moves files between folders you have explicitly chosen, using Apple's security-scoped bookmarks.</li>
+      <li>Stores your settings (folder template, split mode, presets, source and output folder bookmarks) locally in the app's sandboxed container using <span class="code">UserDefaults</span> and the macOS Keychain.</li>
+    </ul>
+    <p>None of this data is transmitted anywhere.</p>
+
+    <h3>Permissions</h3>
+    <ul>
+      <li><strong>File system access (user-granted):</strong> Photo Intake can only read from and write to folders you explicitly add via the folder picker or drag-and-drop. Access is granted per-folder using Apple's <span class="code">NSOpenPanel</span> and security-scoped bookmarks. The app has no ability to access arbitrary locations on your Mac.</li>
+    </ul>
+    <p>No microphone, camera, location services, contacts, calendar, or network permissions are requested.</p>
+
+    <h3>No Network Access</h3>
+    <p>Photo Intake does not connect to any server or external service. Reverse geocoding uses Apple's on-device <span class="code">CLGeocoder</span>, which does not send your GPS coordinates to any remote service.</p>
+
+    <h3>No Analytics or Crash Reporting</h3>
+    <p>There are no third-party SDKs, analytics frameworks, or crash reporters embedded in Photo Intake. We have no visibility into how you use the app.</p>
+
+    <h3>Mac App Store Purchase</h3>
+    <p>Purchasing Photo Intake is handled entirely by Apple's App Store. We do not receive or store any payment information.</p>
+
+    <h3>macOS Sandbox</h3>
+    <p>Photo Intake is a fully sandboxed Mac App Store application. The macOS sandbox restricts the app to its own container and the folders you explicitly grant access to. It cannot access other apps' data, your system files, or any resource outside its granted scope.</p>
+
+    <h3>Your Control</h3>
+    <ul>
+      <li><strong>Revoke folder access:</strong> Remove source or output folders from the app at any time. The bookmark is deleted immediately.</li>
+      <li><strong>Delete all settings:</strong> Uninstalling Photo Intake removes all locally stored preferences, presets, and bookmarks. Your photos and files are unaffected.</li>
+    </ul>
+
+    <h3>Contact</h3>
+    <p>Questions about privacy? Email: <a href="mailto:andres.wetzel@gmail.com">andres.wetzel@gmail.com</a></p>
+    <p><strong>Summary:</strong> Photo Intake is privacy-first. It reads your files locally to organise them, stores your settings locally, and never phones home. No accounts, no cloud, no tracking.</p>
+    <p><em>Last updated: May 2026</em></p>
+
+  </div><!-- /privacy -->
+
+</div><!-- /container -->
+
+<footer>
+  <p>🇨🇭 Made in Switzerland &nbsp;|&nbsp; © 2026 Andres Wetzel. All rights reserved.</p>
+  <p><a href="mailto:andres.wetzel@gmail.com">andres.wetzel@gmail.com</a></p>
+  <p style="margin-top: 12px;">
+    <a href="#home"    onclick="showSection('home')">Home</a> &nbsp;·&nbsp;
+    <a href="#support" onclick="showSection('support')">Support</a> &nbsp;·&nbsp;
+    <a href="#privacy" onclick="showSection('privacy')">Privacy Policy</a>
+  </p>
+</footer>
+
+</body>
+</html>
